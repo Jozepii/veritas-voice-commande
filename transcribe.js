@@ -6,7 +6,7 @@ async function transcribeAudio(audioBuffer) {
       method: 'POST',
       url: 'https://api.deepgram.com/v1/listen',
       headers: {
-        'Authorization': \`Token \${process.env.DEEPGRAM_API_KEY}\`,
+        'Authorization': `Token ${process.env.DEEPGRAM_API_KEY}`,
         'Content-Type': 'audio/wav',
       },
       data: audioBuffer
@@ -19,5 +19,7 @@ async function transcribeAudio(audioBuffer) {
     return '[transcription failed]';
   }
 }
+
+module.exports = transcribeAudio;
 
 module.exports = transcribeAudio;
