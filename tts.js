@@ -1,6 +1,9 @@
 const axios = require('axios');
+const fs = require('fs');
+const path = require('path');
+const { v4: uuidv4 } = require('uuid');
 
-async function textToSpeech(text) {
+async function synthesizeSpeech(text) {
   try {
     const response = await axios({
       method: 'POST',
@@ -10,21 +13,28 @@ async function textToSpeech(text) {
         'Content-Type': 'application/json'
       },
       data: {
-        text: text,
+        text,
         model_id: 'eleven_monolingual_v1',
         voice_settings: {
-          stability: 0.4,
-          similarity_boost: 0.8
+          stability: 0.5,
+          similarity_boost: 0.7
         }
       },
       responseType: 'arraybuffer'
     });
 
-    return response.data;
-  } catch (err) {
-    console.error('[TTS Error]', err.response?.status, err.message);
+    const audioBuffer = Buffer.from(response.data, 'binary');
+
+    // Save to temp file
+    const filename = `${uuidv4()}.mp3`;
+    const filepath = path.join(__dirname, filename);
+    fs.writeFileSync(filepath, audioBuffer);
+
+    return filepath;
+  } catch (error) {
+    console.error('[TTS Error]', error.response?.data || error.message);
     return null;
   }
 }
 
-module.exports = textToSpeech;
+module.exports = synthesizeSpeech;
