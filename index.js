@@ -7,18 +7,20 @@ const generateSpeech = require('./tts');
 
 const app = express();
 
-// ✅ Accept all audio types from Twilio, not just WAV
+// Accept all audio types from Twilio
 app.use(bodyParser.raw({ type: '*/*', limit: '10mb' }));
 
 app.post('/twilio', async (req, res) => {
   console.log('🎙️ Call received, processing...');
   const audioBuffer = req.body;
 
-  // ✅ Debug logs to confirm we're getting audio
+  // Log buffer size
   console.log('📏 Audio Buffer Length:', audioBuffer.length);
   if (audioBuffer.length === 0) {
     console.warn('⚠️ No audio received from Twilio — check content type or stream source');
   }
+
+  // Optional: log headers
   console.log('🧾 Headers:', req.headers);
 
   const transcript = await transcribeAudio(audioBuffer);
@@ -34,6 +36,22 @@ app.post('/twilio', async (req, res) => {
   }
 
   res.set({
+    'Content-Type': 'audio/mpeg',
+    'Content-Length': speechBuffer.length,
+  });
+  res.send(speechBuffer);
+});
+
+// Health check route
+app.get('/', (req, res) => {
+  res.send('✅ Veritas Voice Commander is running.');
+});
+
+// Start the server
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`🚀 AI server listening on port ${PORT}`);
+});
     'Content-Type': 'audio/mpeg',
     'Content-Length': speechBuffer.length,
   });
