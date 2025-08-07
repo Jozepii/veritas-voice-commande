@@ -1,6 +1,7 @@
 const axios = require('axios');
+const fs = require('fs');
 
-async function synthesizeSpeech(text) {
+async function textToSpeech(text) {
   try {
     const voiceId = process.env.ELEVENLABS_VOICE_ID;
     const apiKey = process.env.ELEVENLABS_API_KEY;
@@ -11,25 +12,25 @@ async function synthesizeSpeech(text) {
       headers: {
         'xi-api-key': apiKey,
         'Content-Type': 'application/json',
-        'Accept': 'audio/mpeg',
+        'Accept': 'audio/mpeg'
       },
       data: {
         text,
-        model_id: 'eleven_monolingual_v1',
         voice_settings: {
           stability: 0.4,
-          similarity_boost: 0.5,
-        },
+          similarity_boost: 0.75
+        }
       },
-      responseType: 'arraybuffer',
+      responseType: 'arraybuffer'
     });
 
-    return response.data;
+    return response.data; // raw audio buffer
   } catch (err) {
-    console.error('[TTS Error]', err.response?.data || err.message);
+    console.error('[TTS Error]', err.response?.data?.toString() || err.message);
     return null;
   }
 }
 
-module.exports = synthesizeSpeech;
+module.exports = textToSpeech;
+
 
