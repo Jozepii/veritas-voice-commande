@@ -10,7 +10,7 @@ const app = express();
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
-// Twilio entrypoint — starts a real-time audio stream immediately
+// Twilio entrypoint — open the realtime stream immediately (no Twilio <Say>)
 app.post('/twilio', (req, res) => {
   console.log('📞 Call started — opening real-time stream...');
 
@@ -21,15 +21,13 @@ app.post('/twilio', (req, res) => {
 
   const twiml = `
     <Response>
-      <Say voice="alice">Hello, this is your AI receptionist. You can start speaking at any time.</Say>
       <Connect>
         <Stream url="wss://${host}/stream" track="inbound_audio" />
       </Connect>
     </Response>
   `;
 
-  res.set('Content-Type', 'text/xml');
-  res.send(twiml.trim());
+  res.type('text/xml').send(twiml.trim());
 });
 
 // Health check route
