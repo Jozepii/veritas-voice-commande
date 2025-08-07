@@ -31,6 +31,15 @@ function createStreamServer(server) {
         streamSid = data.start.streamSid;
         console.log('🔌 Stream started', streamSid);
 
+        // Send 1 second of silence immediately so Twilio stays connected
+        const silence = Buffer.alloc(8000); // 1 sec silence at 8kHz μ-law
+        ws.send(JSON.stringify({
+          event: 'media',
+          streamSid,
+          media: { payload: silence.toString('base64') }
+        }));
+
+        // Now send Laura's greeting
         (async () => {
           try {
             speaking = true;
@@ -41,7 +50,11 @@ function createStreamServer(server) {
               const down = new Int16Array(Math.floor(pcm16_16k.length / 2));
               for (let i = 0, j = 0; j < down.length; i += 2, j++) down[j] = pcm16_16k[i];
               const u = muLawEncode(down);
-              ws.send(JSON.stringify({ event: 'media', streamSid, media: { payload: u.toString('base64') } }));
+              ws.send(JSON.stringify({
+                event: 'media',
+                streamSid,
+                media: { payload: u.toString('base64') }
+              }));
             }
             ws.send(JSON.stringify({ event: 'mark', streamSid, mark: { name: 'greeting_done' } }));
           } catch (e) {
@@ -71,10 +84,15 @@ function createStreamServer(server) {
               const down = new Int16Array(Math.floor(pcm16_16k.length / 2)); // 16k → 8k
               for (let i = 0, j = 0; j < down.length; i += 2, j++) down[j] = pcm16_16k[i];
               const u = muLawEncode(down);
-              ws.send(JSON.stringify({ event: 'media', streamSid, media: { payload: u.toString('base64') } }));
+              ws.send(JSON.stringify({
+                event: 'media',
+                streamSid,
+                media: { payload: u.toString('base64') }
+              }));
             }
             ws.send(JSON.stringify({ event: 'mark', streamSid, mark: { name: 'ai_segment_done' } }));
-          })().catch((e) => console.error('Speak error:', e.message))
+          })()
+            .catch((e) => console.error('Speak error:', e.message))
             .finally(() => { speaking = false; });
         }
         return;
