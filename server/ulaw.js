@@ -1,4 +1,5 @@
-// μ-law <-> PCM16 helpers for Twilio media streams (8kHz)
+// μ-law <-> PCM16 helpers for Twilio Media Streams (8kHz)
+
 function muLawDecode(buf) {
   const out = new Int16Array(buf.length);
   for (let i = 0; i < buf.length; i++) {
@@ -12,6 +13,7 @@ function muLawDecode(buf) {
   }
   return out;
 }
+
 function muLawEncode(pcm16) {
   const out = Buffer.alloc(pcm16.length);
   for (let i = 0; i < pcm16.length; i++) {
@@ -27,4 +29,5 @@ function muLawEncode(pcm16) {
   }
   return out;
 }
+
 module.exports = { muLawDecode, muLawEncode };
