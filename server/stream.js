@@ -26,27 +26,33 @@ function createStreamServer(server) {
     ws.on('message', async (raw) => {
       const data = JSON.parse(raw.toString());
 
-      // ---- STREAM START: greet immediately with ElevenLabs (Laura) ----
+      // ---- STREAM START ----
       if (data.event === 'start') {
         streamSid = data.start.streamSid;
         console.log('🔌 Stream started', streamSid);
 
-        // Send 1 second of silence immediately so Twilio stays connected
-        const silence = Buffer.alloc(8000); // 1 sec silence at 8kHz μ-law
+        // Send a 1-second 440Hz tone so we know Twilio is receiving valid μ-law audio
+        const samples = new Int16Array(8000); // 1 sec at 8kHz
+        for (let i = 0; i < samples.length; i++) {
+          samples[i] = Math.sin(2 * Math.PI * 440 * (i / 8000)) * 10000;
+        }
+        const uLawTone = muLawEncode(samples);
         ws.send(JSON.stringify({
           event: 'media',
           streamSid,
-          media: { payload: silence.toString('base64') }
+          media: { payload: uLawTone.toString('base64') }
         }));
+        console.log('✅ Sent 1-second test tone to Twilio');
 
-        // Now send Laura's greeting
+        // Now attempt Laura's greeting
         (async () => {
           try {
             speaking = true;
-            const greeting =
-              "Hi, thanks for calling. This is Laura, your virtual receptionist. How can I help you today?";
+            const greeting = "Hi, this is Laura, your virtual receptionist. How can I help you today?";
+            let gotAudio = false;
+
             for await (const pcm16_16k of ttsStream(session, greeting)) {
-              // downsample 16k → 8k
+              gotAudio = true;
               const down = new Int16Array(Math.floor(pcm16_16k.length / 2));
               for (let i = 0, j = 0; j < down.length; i += 2, j++) down[j] = pcm16_16k[i];
               const u = muLawEncode(down);
@@ -56,6 +62,13 @@ function createStreamServer(server) {
                 media: { payload: u.toString('base64') }
               }));
             }
+
+            if (!gotAudio) {
+              console.error('❌ No audio chunks returned from ElevenLabs for greeting');
+            } else {
+              console.log('✅ Sent Laura greeting audio');
+            }
+
             ws.send(JSON.stringify({ event: 'mark', streamSid, mark: { name: 'greeting_done' } }));
           } catch (e) {
             console.error('Greeting error:', e.message);
