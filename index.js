@@ -90,9 +90,3 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`🚀 AI server listening on port ${PORT}`);
 });
-
-  } catch (err) {
-    console.error('❌ Error processing recording:', err.message || err);
-    res.status(500).send('Error processing recording');
-  }
-});
