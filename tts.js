@@ -1,40 +1,35 @@
 const axios = require('axios');
-const fs = require('fs');
-const path = require('path');
-const { v4: uuidv4 } = require('uuid');
 
 async function synthesizeSpeech(text) {
   try {
+    const voiceId = process.env.ELEVENLABS_VOICE_ID;
+    const apiKey = process.env.ELEVENLABS_API_KEY;
+
     const response = await axios({
       method: 'POST',
-      url: `https://api.elevenlabs.io/v1/text-to-speech/${process.env.ELEVENLABS_VOICE_ID}`,
+      url: `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`,
       headers: {
-        'xi-api-key': process.env.ELEVENLABS_API_KEY,
-        'Content-Type': 'application/json'
+        'xi-api-key': apiKey,
+        'Content-Type': 'application/json',
+        'Accept': 'audio/mpeg',
       },
       data: {
         text,
         model_id: 'eleven_monolingual_v1',
         voice_settings: {
-          stability: 0.5,
-          similarity_boost: 0.7
-        }
+          stability: 0.4,
+          similarity_boost: 0.5,
+        },
       },
-      responseType: 'arraybuffer'
+      responseType: 'arraybuffer',
     });
 
-    const audioBuffer = Buffer.from(response.data, 'binary');
-
-    // Save to temp file
-    const filename = `${uuidv4()}.mp3`;
-    const filepath = path.join(__dirname, filename);
-    fs.writeFileSync(filepath, audioBuffer);
-
-    return filepath;
-  } catch (error) {
-    console.error('[TTS Error]', error.response?.data || error.message);
+    return response.data;
+  } catch (err) {
+    console.error('[TTS Error]', err.response?.data || err.message);
     return null;
   }
 }
 
 module.exports = synthesizeSpeech;
+
