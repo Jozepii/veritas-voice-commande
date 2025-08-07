@@ -1,22 +1,22 @@
 const axios = require('axios');
 
-async function synthesizeSpeech(text) {
+async function textToSpeech(text) {
   try {
     const response = await axios({
       method: 'POST',
       url: `https://api.elevenlabs.io/v1/text-to-speech/${process.env.ELEVENLABS_VOICE_ID}`,
       headers: {
         'xi-api-key': process.env.ELEVENLABS_API_KEY,
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       },
       data: {
         text,
         voice_settings: {
-          stability: 0.4,
-          similarity_boost: 0.7
+          stability: 0.5,
+          similarity_boost: 0.75
         }
       },
-      responseType: 'arraybuffer'
+      responseType: 'arraybuffer',
     });
 
     return response.data;
@@ -26,5 +26,4 @@ async function synthesizeSpeech(text) {
   }
 }
 
-module.exports = synthesizeSpeech;
-
+module.exports = textToSpeech;
