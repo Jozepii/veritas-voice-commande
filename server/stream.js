@@ -3,7 +3,7 @@ const url = require('url');
 const { muLawDecode, muLawEncode } = require('./ulaw');
 const STT = require('./stt_stream');
 const ttsStream = require('./tts_stream');
-const getGPTReply = require('../gpt'); // your existing GPT fn
+const getGPTReply = require('../gpt'); // your existing GPT reply logic
 
 function createStreamServer(server) {
   const wss = new WebSocket.Server({ noServer: true });
@@ -12,7 +12,9 @@ function createStreamServer(server) {
     const { pathname } = url.parse(req.url);
     if (pathname === '/stream') {
       wss.handleUpgrade(req, socket, head, (ws) => wss.emit('connection', ws, req));
-    } else socket.destroy();
+    } else {
+      socket.destroy();
+    }
   });
 
   wss.on('connection', (ws) => {
@@ -42,14 +44,21 @@ function createStreamServer(server) {
           (async () => {
             const reply = await getGPTReply(utter.text);
             for await (const pcm16_16k of ttsStream(session, reply)) {
-              const down = new Int16Array(Math.floor(pcm16_16k.length / 2)); // 16k -> 8k
+              const down = new Int16Array(Math.floor(pcm16_16k.length / 2)); // 16k → 8k
               for (let i = 0, j = 0; j < down.length; i += 2, j++) down[j] = pcm16_16k[i];
               const u = muLawEncode(down);
-              ws.send(JSON.stringify({ event: 'media', streamSid, media: { payload: u.toString('base64') } }));
+              ws.send(JSON.stringify({
+                event: 'media',
+                streamSid,
+                media: { payload: u.toString('base64') }
+              }));
             }
             ws.send(JSON.stringify({ event: 'mark', streamSid, mark: { name: 'ai_segment_done' } }));
             speaking = false;
-          })().catch(e => { console.error('speak err', e.message); speaking = false; });
+          })().catch((e) => {
+            console.error('Speak error:', e.message);
+            speaking = false;
+          });
         }
         return;
       }
@@ -66,4 +75,5 @@ function createStreamServer(server) {
 
   return wss;
 }
+
 module.exports = { createStreamServer };
