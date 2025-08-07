@@ -6,11 +6,17 @@ const getGPTReply = require('./gpt');
 const generateSpeech = require('./tts');
 
 const app = express();
-app.use(bodyParser.raw({ type: 'audio/wav', limit: '10mb' }));
+
+// ✅ Accept all audio types from Twilio, not just WAV
+app.use(bodyParser.raw({ type: '*/*', limit: '10mb' }));
 
 app.post('/twilio', async (req, res) => {
   console.log('🎙️ Call received, processing...');
   const audioBuffer = req.body;
+
+  // Optional debug logs (remove if not needed)
+  console.log('📏 Audio Buffer Length:', audioBuffer.length);
+  console.log('🧾 Headers:', req.headers);
 
   const transcript = await transcribeAudio(audioBuffer);
   console.log('📝 Transcript:', transcript);
