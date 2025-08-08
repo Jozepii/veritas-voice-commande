@@ -10,19 +10,17 @@ const app = express();
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
-// Twilio entrypoint — open the realtime stream immediately (no Twilio <Say>)
+// Twilio entrypoint — returns TwiML that opens a real-time audio stream
 app.post('/twilio', (req, res) => {
   console.log('📞 Call started — opening real-time stream...');
 
-  const host = process.env.PUBLIC_HOST; // e.g. veritas-voice-commande-production.up.railway.app
-  if (!host) {
-    console.error('❌ PUBLIC_HOST is not set!');
-  }
+  // Hardcode the domain to avoid any PUBLIC_HOST variable issues
+  const streamUrl = 'wss://veritas-voice-commande-production.up.railway.app/stream';
 
   const twiml = `
     <Response>
       <Connect>
-        <Stream url="wss://${host}/stream" track="inbound_audio" />
+        <Stream url="${streamUrl}" track="inbound_audio" />
       </Connect>
     </Response>
   `;
