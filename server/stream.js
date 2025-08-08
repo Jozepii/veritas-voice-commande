@@ -8,12 +8,14 @@ function createStreamServer(server) {
   server.on('upgrade', (req, socket, head) => {
     const { pathname } = url.parse(req.url);
     if (pathname === '/stream') {
+      console.log('📡 Incoming WebSocket upgrade for /stream');
       wss.handleUpgrade(req, socket, head, (ws) => {
         console.log('✅ WebSocket connection established to /stream');
+
         ws.on('message', (raw) => {
           try {
             const data = JSON.parse(raw.toString());
-            console.log('📨 Incoming WS event:', data.event);
+            console.log('📨 WS event:', data.event);
 
             if (data.event === 'start') {
               console.log('🔌 Stream started:', data.start.streamSid);
@@ -22,7 +24,7 @@ function createStreamServer(server) {
               console.log('🛑 Stream stopped');
             }
           } catch (err) {
-            console.error('⚠️ WS message parse error:', err.message);
+            console.error('⚠️ Error parsing WS message:', err.message);
           }
         });
       });
