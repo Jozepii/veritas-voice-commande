@@ -9,6 +9,7 @@ function createStreamServer(server) {
     const { pathname } = url.parse(req.url);
     if (pathname === '/stream') {
       console.log('📡 Incoming WebSocket upgrade for /stream');
+
       wss.handleUpgrade(req, socket, head, (ws) => {
         console.log('✅ WebSocket connection established to /stream');
 
@@ -26,6 +27,10 @@ function createStreamServer(server) {
           } catch (err) {
             console.error('⚠️ Error parsing WS message:', err.message);
           }
+        });
+
+        ws.on('close', () => {
+          console.log('❎ WebSocket connection closed');
         });
       });
     } else {
